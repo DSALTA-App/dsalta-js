@@ -67,21 +67,13 @@ class Dsalta {
 
 	/**
 	 * Extracts file information from the input
-	 * @param file - Input file (path, Buffer, or ReadStream)
+	 * @param file - Input file
 	 * @returns Object containing filename and MIME type
 	 */
-	private getFileInfo(file: string | Buffer | NodeJS.ReadableStream): FileInfo {
-		if (typeof file === 'string') {
-			const filename = path.basename(file);
-			return {
-				filename,
-				fileType: mime.lookup(filename) || 'application/octet-stream',
-			};
-		}
-
+	private getFileInfo(file: File): FileInfo {
 		return {
-			filename: 'file',
-			fileType: 'application/octet-stream',
+			filename: file.name,
+			fileType: file.type || 'application/octet-stream',
 		};
 	}
 
@@ -112,10 +104,7 @@ class Dsalta {
 	 * @param file - File to include in form
 	 * @param metadata - Optional metadata to attach
 	 */
-	private createFormData(
-		file: string | Buffer | NodeJS.ReadableStream,
-		metadata?: FileMetadata,
-	): FormData {
+	private createFormData(file: File, metadata?: FileMetadata): FormData {
 		const formData = new FormData();
 		formData.append('file', file);
 
@@ -132,19 +121,19 @@ class Dsalta {
 	 * @param status - HTTP status code
 	 * @param code - Error code
 	 * @param fileInfo - File information
-	 * @param fileBuffer - File content
+	 * @param file - File object
 	 */
 	private createErrorResponse(
 		message: string,
 		status: number,
 		code: string | undefined,
 		fileInfo: FileInfo,
-		fileBuffer: Buffer,
+		file: File,
 	): HashFileResponse {
 		return {
 			success: false,
 			timestamp: new Date().toISOString(),
-			file: fileBuffer,
+			file: file,
 			filename: fileInfo.filename,
 			fileType: fileInfo.fileType,
 			error: {
@@ -160,16 +149,18 @@ class Dsalta {
 	 * @param responseData - API response data
 	 * @param fileInfo - File information
 	 * @param base64File - Base64 encoded file content
+	 * @param originalFile - Original file object
 	 */
 	private createSuccessResponse(
 		responseData: ApiSuccessResponse,
 		fileInfo: FileInfo,
 		base64File: string,
+		originalFile: File,
 	): HashFileResponse {
 		return {
 			success: true,
 			timestamp: responseData.timestamp,
-			file: Buffer.from(base64File, 'base64'),
+			file: originalFile,
 			filename: responseData.data.filename || fileInfo.filename,
 			fileType: responseData.data.fileType || fileInfo.fileType,
 			data: {
@@ -182,28 +173,12 @@ class Dsalta {
 
 	/**
 	 * Hashes a file with optional metadata
-	 * @param file - File to hash (path, Buffer, or ReadStream)
+	 * @param file - File to hash
 	 * @param metadata - Optional metadata to attach to the hash
 	 * @returns Promise resolving to HashFileResponse
 	 */
-	async hashFile(
-		file: string | Buffer | NodeJS.ReadableStream,
-		metadata?: FileMetadata,
-	): Promise<HashFileResponse> {
+	async hashFile(file: File, metadata?: FileMetadata): Promise<HashFileResponse> {
 		const fileInfo = this.getFileInfo(file);
-		let fileBuffer: Buffer;
-
-		try {
-			fileBuffer = await this.fileToBuffer(file);
-		} catch (error) {
-			return this.createErrorResponse(
-				`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-				400,
-				'FILE_READ_ERROR',
-				fileInfo,
-				Buffer.alloc(0),
-			);
-		}
 
 		try {
 			const formData = this.createFormData(file, metadata);
@@ -216,45 +191,61 @@ class Dsalta {
 			const { data: responseData } = response;
 
 			if (responseData.success) {
-				return this.createSuccessResponse(responseData, fileInfo, responseData.data.file);
+				return {
+					success: true,
+					timestamp: responseData.timestamp,
+					file: file,
+					filename: responseData.data.filename || fileInfo.filename,
+					fileType: responseData.data.fileType || fileInfo.fileType,
+					data: {
+						hash: responseData.data.hash,
+						metadata: responseData.data.metadata,
+						base64File: responseData.data.file,
+					},
+				};
 			}
 
-			if ('data' in responseData && responseData.data?.file) {
-				return this.createErrorResponse(
-					responseData.message,
-					responseData.status,
-					responseData.code,
-					fileInfo,
-					Buffer.from(responseData.data.file, 'base64'),
-				);
-			}
-
-			return this.createErrorResponse(
-				responseData.message,
-				responseData.status,
-				responseData.code,
-				fileInfo,
-				fileBuffer,
-			);
+			return {
+				success: false,
+				timestamp: new Date().toISOString(),
+				file: file,
+				filename: fileInfo.filename,
+				fileType: fileInfo.fileType,
+				error: {
+					message: responseData.message,
+					status: responseData.status,
+					code: responseData.code,
+				},
+			};
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response?.data) {
 				const errorData = error.response.data as ApiErrorResponse;
-				return this.createErrorResponse(
-					errorData.message || error.message,
-					errorData.status || error.response.status || 500,
-					errorData.code,
-					fileInfo,
-					fileBuffer,
-				);
+				return {
+					success: false,
+					timestamp: new Date().toISOString(),
+					file: file,
+					filename: fileInfo.filename,
+					fileType: fileInfo.fileType,
+					error: {
+						message: errorData.message || error.message,
+						status: errorData.status || error.response.status || 500,
+						code: errorData.code,
+					},
+				};
 			}
 
-			return this.createErrorResponse(
-				error instanceof Error ? error.message : 'An unexpected error occurred',
-				500,
-				'UNEXPECTED_ERROR',
-				fileInfo,
-				fileBuffer,
-			);
+			return {
+				success: false,
+				timestamp: new Date().toISOString(),
+				file: file,
+				filename: fileInfo.filename,
+				fileType: fileInfo.fileType,
+				error: {
+					message: error instanceof Error ? error.message : 'An unexpected error occurred',
+					status: 500,
+					code: 'UNEXPECTED_ERROR',
+				},
+			};
 		}
 	}
 }

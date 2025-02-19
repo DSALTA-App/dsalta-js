@@ -61,8 +61,8 @@ export interface HashFileResponse {
   success: boolean;
   /** ISO timestamp of the operation */
   timestamp: string;
-  /** File content as Buffer */
-  file: Buffer;
+  /** Original file */
+  file: File;
   /** Original or processed filename */
   filename: string;
   /** MIME type of the file */
