@@ -1,0 +1,50 @@
+{
+  "name": "dsalta-node-sdk",
+  "version": "1.0.0",
+  "description": "Official Node.js SDK for Dsalta API - File hashing and verification service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "dsalta",
+    "hash",
+    "file",
+    "verification",
+    "sdk",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "form-data": "^4.0.0",
+    "mime-types": "^2.1.35"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
