@@ -5,11 +5,9 @@ export interface DsaltaConfig {
   /** API key for authentication */
   apiKey: string;
   /** Base URL of the Dsalta API */
-  baseUrl?: string;
+  baseUrl: string;
   /** Request timeout in milliseconds */
   timeout?: number;
-  /** Hash algorithm to use */
-  hashAlgorithm?: string;
 }
 
 /**

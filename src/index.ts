@@ -10,16 +10,12 @@ import {
 	ApiErrorResponse,
 } from './types';
 import * as fs from 'fs';
-import * as path from 'path';
-import * as mime from 'mime-types';
 
 /**
  * Default configuration values
  */
 const DEFAULT_CONFIG: Partial<DsaltaConfig> = {
-	baseUrl: 'http://localhost:3003',
 	timeout: 5000,
-	hashAlgorithm: 'sha256',
 };
 
 /**
@@ -32,7 +28,7 @@ class Dsalta {
 	/**
 	 * Creates a new instance of the Dsalta SDK
 	 * @param config - Configuration options
-	 * @throws {Error} If API key is not provided
+	 * @throws {Error} If required config values are not provided
 	 */
 	constructor(config: DsaltaConfig) {
 		this.validateConfig(config);
@@ -43,11 +39,14 @@ class Dsalta {
 	/**
 	 * Validates the provided configuration
 	 * @param config - Configuration to validate
-	 * @throws {Error} If API key is not provided
+	 * @throws {Error} If required config values are not provided
 	 */
 	private validateConfig(config: DsaltaConfig): void {
 		if (!config.apiKey) {
 			throw new Error('API key is required');
+		}
+		if (!config.baseUrl) {
+			throw new Error('Base URL is required');
 		}
 	}
 
