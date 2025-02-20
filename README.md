@@ -19,6 +19,8 @@ const Dsalta = require("dsalta-node-sdk").default;
 
 const dsalta = new Dsalta({
   apiKey: "your-api-key",
+  baseUrl: "https://api.dsalta.com", // Required
+  timeout: 5000 // Optional, defaults to 5000ms
 });
 
 async function example() {
@@ -43,6 +45,8 @@ import { FileMetadata } from "dsalta-node-sdk";
 
 const dsalta = new Dsalta({
   apiKey: "your-api-key",
+  baseUrl: "https://api.dsalta.com", // Required
+  timeout: 5000 // Optional, defaults to 5000ms
 });
 
 async function example() {
@@ -71,9 +75,8 @@ new Dsalta(config: DsaltaConfig)
 Configuration options:
 
 - `apiKey` (required): Your Dsalta API key
-- `baseUrl` (optional): The base URL for the Dsalta API (default: 'http://localhost:3003')
+- `baseUrl` (required): The base URL for the Dsalta API 
 - `timeout` (optional): Request timeout in milliseconds (default: 5000)
-- `hashAlgorithm` (optional): Default hash algorithm (default: 'sha256')
 
 ### Methods
 
@@ -91,7 +94,7 @@ Returns: Promise<HashFileResponse>
 The response includes:
 
 - `success`: boolean indicating if the operation succeeded
-- `file`: Buffer containing the file
+- `file`: Original File object
 - `filename`: Name of the processed file
 - `fileType`: MIME type of the file
 - `timestamp`: ISO timestamp of the operation
@@ -106,7 +109,7 @@ Success case:
 {
   success: true,
   timestamp: '2024-02-19T19:19:46.776Z',
-  file: <Buffer ...>,
+  file: File,
   filename: 'document.pdf',
   fileType: 'application/pdf',
   data: {
@@ -114,7 +117,8 @@ Success case:
     metadata: {
       author: 'John Doe',
       department: 'Legal'
-    }
+    },
+    base64File: 'base64EncodedContent...'
   }
 }
 ```
@@ -125,7 +129,7 @@ Error case:
 {
   success: false,
   timestamp: '2024-02-19T19:19:46.776Z',
-  file: <Buffer ...>,
+  file: File,
   filename: 'document.pdf',
   fileType: 'application/pdf',
   error: {
